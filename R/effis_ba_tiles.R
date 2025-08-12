@@ -21,7 +21,7 @@ crs_epsg <- "EPSG:3857"
 dir.create("tiles", showWarnings = FALSE) # por si quieres pruebas rápidas
 
 # Resolución solicitada al WMS. 'factor' permite subir detalle fácilmente.
-factor <- 1
+factor <- 2
 width <- 2048 * factor
 height <- 2048 * factor
 
@@ -55,15 +55,19 @@ get_chosen_layer <- function() {
 }
 
 layer_name <- get_chosen_layer()
+cat("Capa seleccionada:", layer_name, "\n")
 
 # Servicio WMS base (mismo endpoint, solo cambia el parámetro 'layers=' según elección)
-wms_base <- paste0(
-  "https://maps.effis.emergency.copernicus.eu/gwis?",
-  "service=WMS&request=GetMap&layers=", layer_name,
-  "&styles=&format=image/png&transparent=true&version=1.1.1&singletile=false"
-)
+if (layer_name == "nrt.ba") {
+  wms_base <- "https://maps.effis.emergency.copernicus.eu/gwis?service=WMS&request=GetMap&layers=nrt.ba&styles=&format=image/png&transparent=true&version=1.1.1&singletile=false"
+} else if (layer_name == "modis.ba") {
+  wms_base <- "https://maps.effis.emergency.copernicus.eu/effis?service=WMS&request=GetMap&layers=modis.ba&styles=&format=image/png&transparent=true&version=1.1.1&singletile=false"
+} else {
+  stop("Capa no reconocida. Usa 'nrt.ba' o 'modis.ba'.")
+}
 
-cat("Capa seleccionada:", layer_name, "\n")
+
+
 
 
 # ------------------------------------------------------------
@@ -112,10 +116,10 @@ can_grid <- make_grid(can_bbox, 1, 1, id_start = max(pen_grid$id) + 1)
 all_tiles <- bind_rows(pen_grid, can_grid)
 
 # Export de referencia (en 4326) para revisar rápidamente
-st_write(st_transform(all_tiles, 4326),
-  paste0("all_tiles_", gsub("\\.", "_", layer_name), ".geojson"),
-  delete_dsn = TRUE, quiet = TRUE
-)
+# st_write(st_transform(all_tiles, 4326),
+#   paste0("all_tiles_", gsub("\\.", "_", layer_name), ".geojson"),
+#   delete_dsn = TRUE, quiet = TRUE
+# )
 
 
 # ---- Ventanas temporales dinámicas ----
