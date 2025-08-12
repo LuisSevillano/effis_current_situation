@@ -13,21 +13,21 @@ library(dplyr)
 
 
 # ---------------- CONFIG ----------------
-ncol <- 6   # nº de columnas (Península+Baleares)
-nrow <- 6   # nº de filas    (Península+Baleares)
-options(timeout = 60)  # timeout base; la descarga tiene su propio timeout por intento
+ncol <- 6 # nº de columnas (Península+Baleares)
+nrow <- 6 # nº de filas    (Península+Baleares)
+options(timeout = 60) # timeout base; la descarga tiene su propio timeout por intento
 
 crs_epsg <- "EPSG:3857"
-dir.create("tiles", showWarnings = FALSE)  # por si quieres pruebas rápidas
+dir.create("tiles", showWarnings = FALSE) # por si quieres pruebas rápidas
 
 # Resolución solicitada al WMS. 'factor' permite subir detalle fácilmente.
 factor <- 2.5
-width  <- 2048 * factor
+width <- 2048 * factor
 height <- 2048 * factor
 
 # Archivos de entrada con bbox en EPSG:3857
-peninbal_path <- "data/peninbal.geojson"  # bbox península + Baleares
-canary_path   <- "data/canary.geojson"    # bbox Canarias
+peninbal_path <- "data/peninbal.geojson" # bbox península + Baleares
+canary_path <- "data/canary.geojson" # bbox Canarias
 # ----------------------------------------
 
 
@@ -46,8 +46,10 @@ get_chosen_layer <- function() {
   }
   # 2) Si no hay argumento válido, preguntar al usuario
   cat("Elige la capa a utilizar:\n",
-      "  1) nrt.ba  (Near Real-Time, rápida para 1–3 días)\n",
-      "  2) modis.ba (MODIS MCD64, estable para históricos)\n", sep = "")
+    "  1) nrt.ba  (Near Real-Time, rápida para 1–3 días)\n",
+    "  2) modis.ba (MODIS MCD64, estable para históricos)\n",
+    sep = ""
+  )
   ans <- readline("Escribe 1 o 2 (por defecto: 1): ")
   if (trimws(ans) %in% c("2", "modis.ba")) "modis.ba" else "nrt.ba"
 }
@@ -70,12 +72,17 @@ cat("Capa seleccionada:", layer_name, "\n")
 safe_download <- function(url, destfile, tries = 3, timeout_sec = 120, sleep_sec = 2) {
   for (t in seq_len(tries)) {
     cat("  Descarga intento", t, "...\n")
-    ok <- try({
-      options(timeout = timeout_sec)
-      download.file(url, destfile, mode = "wb", quiet = TRUE)
-      file.exists(destfile) && file.size(destfile) > 0
-    }, silent = TRUE)
-    if (!inherits(ok, "try-error") && isTRUE(ok)) return(TRUE)
+    ok <- try(
+      {
+        options(timeout = timeout_sec)
+        download.file(url, destfile, mode = "wb", quiet = TRUE)
+        file.exists(destfile) && file.size(destfile) > 0
+      },
+      silent = TRUE
+    )
+    if (!inherits(ok, "try-error") && isTRUE(ok)) {
+      return(TRUE)
+    }
     Sys.sleep(sleep_sec)
   }
   FALSE
@@ -94,10 +101,10 @@ make_grid <- function(bbox, ncol, nrow, id_start = 1) {
 
 # ---- Tiles (lectura de bboxes) ----
 pen <- st_read(peninbal_path, quiet = TRUE)
-can <- st_read(canary_path,   quiet = TRUE)
+can <- st_read(canary_path, quiet = TRUE)
 
-pen_bbox <- st_bbox(pen)  # península + Baleares
-can_bbox <- st_bbox(can)  # Canarias
+pen_bbox <- st_bbox(pen) # península + Baleares
+can_bbox <- st_bbox(can) # Canarias
 
 pen_grid <- make_grid(pen_bbox, ncol, nrow, id_start = 1)
 can_grid <- make_grid(can_bbox, 1, 1, id_start = max(pen_grid$id) + 1)
@@ -106,8 +113,9 @@ all_tiles <- bind_rows(pen_grid, can_grid)
 
 # Export de referencia (en 4326) para revisar rápidamente
 st_write(st_transform(all_tiles, 4326),
-         paste0("all_tiles_", gsub("\\.", "_", layer_name), ".geojson"),
-         delete_dsn = TRUE, quiet = TRUE)
+  paste0("all_tiles_", gsub("\\.", "_", layer_name), ".geojson"),
+  delete_dsn = TRUE, quiet = TRUE
+)
 
 
 # ---- Ventanas temporales dinámicas ----
@@ -128,24 +136,24 @@ fmt <- function(d) format(d, "%Y-%m-%d")
 # Bucle principal por rango temporal
 # ============================================================
 for (rg in ranges) {
-  time_param <- paste0(fmt(rg$start), "/", fmt(rg$end))  # se inyecta en la URL WMS
+  time_param <- paste0(fmt(rg$start), "/", fmt(rg$end)) # se inyecta en la URL WMS
   # La carpeta de salida incluye la capa para que puedas correr ambos modos sin pisar resultados
   out_dir <- file.path("out", layer_name, paste0(fmt(rg$start), "_to_", fmt(rg$end)))
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(out_dir, "tiles"), showWarnings = FALSE)
-  
+
   cat("\n=== [", layer_name, "] Rango temporal:", time_param, "===\n", sep = "")
-  
+
   # Aquí iremos metiendo las geometrías válidas de cada tile para luego disolver
   vect_list <- list()
-  
+
   # -----------------------------------------
   # Bucle por tile
   # -----------------------------------------
   for (i in seq_len(nrow(all_tiles))) {
     bb <- st_bbox(all_tiles[i, ])
     bbox_str <- paste(bb, collapse = ",")
-    
+
     url <- paste0(
       wms_base,
       "&time=", time_param,
@@ -154,68 +162,71 @@ for (rg in ranges) {
       "&srs=", crs_epsg,
       "&bbox=", bbox_str
     )
-    
+
     tile_id <- all_tiles$id[i]
     # Los nombres incluyen la capa, por si descargas ambas en paralelo
-    png_path     <- file.path(out_dir, "tiles", sprintf("tile_%d_%s.png",     tile_id, gsub("\\.", "_", layer_name)))
-    pgw_path     <- sub("\\.png$", ".pgw", png_path)
+    png_path <- file.path(out_dir, "tiles", sprintf("tile_%d_%s.png", tile_id, gsub("\\.", "_", layer_name)))
+    pgw_path <- sub("\\.png$", ".pgw", png_path)
     geojson_path <- file.path(out_dir, "tiles", sprintf("tile_%d_%s.geojson", tile_id, gsub("\\.", "_", layer_name)))
-    
+
     cat("Tile", tile_id, "→\n  URL:", url, "\n")
-    
+
     # ---------- Descarga con reintentos ----------
     ok <- safe_download(url, png_path, tries = 3, timeout_sec = 120)
     if (!ok) {
       warning("  No se pudo descargar tile ", tile_id, ". Se omite.\n")
       next
     }
-    
+
     # ---------- World file (.pgw) ----------
-    xmin <- bb["xmin"]; ymin <- bb["ymin"]; xmax <- bb["xmax"]; ymax <- bb["ymax"]
+    xmin <- bb["xmin"]
+    ymin <- bb["ymin"]
+    xmax <- bb["xmax"]
+    ymax <- bb["ymax"]
     A <- (xmax - xmin) / width
     E <- -(ymax - ymin) / height
-    C <- xmin + A/2
-    F <- ymax + E/2
+    C <- xmin + A / 2
+    F <- ymax + E / 2
     writeLines(sprintf("%.15f", c(A, 0, 0, E, C, F)), con = pgw_path)
-    
+
     # ---------- Lectura del raster y blindajes ----------
     stk <- try(rast(png_path), silent = TRUE)
     if (inherits(stk, "try-error")) {
       warning("  No se pudo leer raster del tile ", tile_id, ". Se omite.\n")
       next
     }
-    
+
     # Si hay canal alfa, comprobamos transparencia total
     if (nlyr(stk) >= 4) {
-      alpha_max <- global(stk[[4]], max, na.rm = TRUE)[1,1]
+      alpha_max <- global(stk[[4]], max, na.rm = TRUE)[1, 1]
       if (!is.finite(alpha_max) || alpha_max <= 0) {
         message("  Tile ", tile_id, ": completamente transparente (alfa = 0). Se omite.")
         next
       }
     }
-    
+
     # Banda 1 y georreferenciación
     r <- stk[[1]]
     ext(r) <- ext(xmin, xmax, ymin, ymax)
     crs(r) <- crs_epsg
-    
-    max_val <- global(r, max, na.rm = TRUE)[1,1]
+
+    max_val <- global(r, max, na.rm = TRUE)[1, 1]
     if (!is.finite(max_val) || max_val <= 0) {
       message("  Tile ", tile_id, ": sin señal (max <= 0). Se omite.")
       next
     }
-    
+
     # ---------- Umbral flexible ----------
     # Nos quedamos con todo lo que esté por encima de (max_val - 30).
     r_bin <- r > (max_val - 30)
-    
+
     # ---------- Vectorización ----------
     vect_pol <- as.polygons(r_bin, dissolve = TRUE, values = TRUE, na.rm = TRUE)
-    
+
     # Tomamos la primera columna de atributos (sea 'lyr.1' o '<nombre>_1') y filtramos == 1
     val_col <- names(vect_pol)[1]
-    vect_pol <- vect_pol[ vect_pol[[val_col]] == 1 ]
-    
+    vect_pol <- vect_pol[vect_pol[[val_col]] == 1]
+
     if (nrow(vect_pol) > 0) {
       vect_sf <- st_as_sf(vect_pol)
       st_write(vect_sf, geojson_path, delete_dsn = TRUE, quiet = TRUE)
@@ -225,16 +236,16 @@ for (rg in ranges) {
       message("  Tile ", tile_id, ": sin polígonos tras vectorizar. Se omite.")
     }
   }
-  
+
   # ---------- Dissolve final del rango ----------
   if (length(vect_list) > 0) {
-    geom_all   <- do.call(c, lapply(vect_list, st_geometry))  # concatenamos sfc
-    geom_valid <- st_make_valid(geom_all)                      # arreglamos geometrías problemáticas
-    final      <- st_sf(geometry = st_union(geom_valid)) %>%   # disolvemos
-      st_transform(4326)                                       # salida en WGS84
-    
+    geom_all <- do.call(c, lapply(vect_list, st_geometry)) # concatenamos sfc
+    geom_valid <- st_make_valid(geom_all) # arreglamos geometrías problemáticas
+    final <- st_sf(geometry = st_union(geom_valid)) %>% # disolvemos
+      st_transform(4326) # salida en WGS84
+
     # El nombre final incluye la capa y el rango; así puedes tener ambos productos a la vez
-    final_path <- file.path(out_dir, paste0("fuegos_espania_", gsub("\\.", "_", layer_name), ".geojson"))
+    final_path <- file.path(out_dir, paste0("spain_fires_", gsub("\\.", "_", layer_name), ".geojson"))
     st_write(final, final_path, delete_dsn = TRUE, quiet = TRUE)
     cat("✔ Capa final creada:", final_path, "\n")
   } else {

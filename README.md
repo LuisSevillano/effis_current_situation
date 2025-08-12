@@ -22,4 +22,4 @@ install.packages(c("sf", "terra", "dplyr"))
 ```
 
 
-Correr el script `get_data.R`.
+Correr el script `effis_ba_tiles.R`.
