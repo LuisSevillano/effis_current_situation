@@ -36,7 +36,7 @@ jobs:
 
       - name: Commit & push results (nrt.ba)
         run: |
-          git add out/nrt.ba/ || true
+          git add out/nrt.ba/**/*.geojson || true
           git commit -m "Update NRT burned area data ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || echo "No changes to commit (nrt.ba)"
           git push || echo "Nothing to push (nrt.ba)"
 
@@ -46,6 +46,6 @@ jobs:
 
       - name: Commit & push results (modis.ba)
         run: |
-          git add out/modis.ba/ || true
+          git add out/modis.ba/**/*.geojson || true
           git commit -m "Update MODIS burned area data ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || echo "No changes to commit (modis.ba)"
           git push || echo "Nothing to push (modis.ba)"
