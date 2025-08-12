@@ -21,7 +21,7 @@ crs_epsg <- "EPSG:3857"
 dir.create("tiles", showWarnings = FALSE) # por si quieres pruebas rápidas
 
 # Resolución solicitada al WMS. 'factor' permite subir detalle fácilmente.
-factor <- 2.5
+factor <- 1
 width <- 2048 * factor
 height <- 2048 * factor
 
@@ -124,9 +124,9 @@ today <- Sys.Date()
 # - el rango 'time' que se pide al WMS
 # - la carpeta de salida
 ranges <- list(
-  list(label = "last1", start = today - 1, end = today),
-  list(label = "last2", start = today - 2, end = today),
-  list(label = "last3", start = today - 3, end = today)
+  list(label = "last1", start = today - 1, end = today)
+  # list(label = "last2", start = today - 2, end = today),
+  # list(label = "last3", start = today - 3, end = today)
 )
 
 fmt <- function(d) format(d, "%Y-%m-%d")
