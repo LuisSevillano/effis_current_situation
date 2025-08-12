@@ -13,8 +13,8 @@ library(dplyr)
 
 
 # ---------------- CONFIG ----------------
-ncol <- 6 # nº de columnas (Península+Baleares)
-nrow <- 6 # nº de filas    (Península+Baleares)
+ncol <- 5 # nº de columnas (Península+Baleares)
+nrow <- 5 # nº de filas    (Península+Baleares)
 options(timeout = 60) # timeout base; la descarga tiene su propio timeout por intento
 
 crs_epsg <- "EPSG:3857"

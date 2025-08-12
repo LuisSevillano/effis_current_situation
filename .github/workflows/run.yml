@@ -3,27 +3,45 @@ name: Run EFFIS Burned Area Script
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"  # Ejecuta todos los días a las 06:00 UTC
+    - cron: "0 6 * * *"  # Diario a las 06:00 UTC
 
 jobs:
   run-effis:
     runs-on: ubuntu-latest
     container:
       image: rocker/geospatial:4.3.3
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # para poder pushear sin problemas
 
-      - name: Install additional R packages
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install additional R packages (if needed)
         run: |
           Rscript -e 'install.packages(c("dplyr"), repos = "https://cloud.r-project.org")'
 
+      # ----- Primera pasada: NRT -----
       - name: Run script (nrt.ba)
         run: Rscript R/effis_ba_tiles.R --layer=nrt.ba
 
+      - name: Commit & push results (nrt.ba)
+        run: |
+          git add out/nrt.ba/ || true
+          git commit -m "Update NRT burned area data ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || echo "No changes to commit (nrt.ba)"
+          git push || echo "Nothing to push (nrt.ba)"
+
+      # ----- Segunda pasada: MODIS -----
       - name: Run script (modis.ba)
         run: Rscript R/effis_ba_tiles.R --layer=modis.ba
 
-      - name: Commit and push results
+      - name: Commit & push results (modis.ba)
         run: |
-          git config --global user.name "github-actions[bo]()
+          git add out/modis.ba/ || true
+          git commit -m "Update MODIS burned area data ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || echo "No changes to commit (modis.ba)"
+          git push || echo "Nothing to push (modis.ba)"
