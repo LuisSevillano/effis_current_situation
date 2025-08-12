@@ -3,6 +3,8 @@
 Este proyecto permite descargar datos de incendios desde el servicio WMS de **Copernicus EFFIS (European Forest Fire Information System)**, dividiendo España en varios cuadrantes para cubrir toda la península, Baleares y Canarias.
 Cada cuadrante se procesa para extraer los polígonos de áreas quemadas en los últimos 1, 2 y 3 días, generando ficheros **GeoJSON** listos para usar en QGIS u otros SIG.
 
+El script descarga desde el visor del EFFIS https://forest-fire.emergency.copernicus.eu/apps/effis_current_situation/index.html. Los polígonos que generan no tienen ningún tipo de información como nombre de incendio, hectáreas afectadas, etc.
+
 ---
 
 ## Requisitos
