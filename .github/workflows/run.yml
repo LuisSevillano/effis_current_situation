@@ -1,0 +1,42 @@
+name: Run EFFIS Burned Area Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *" # At minute 0 past every 6th hour
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3.3'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudunits2-dev libgdal-dev libgeos-dev libproj-dev
+
+      - name: Install R packages
+        run: |
+          Rscript -e 'install.packages(c("sf", "terra", "dplyr"), repos="https://cloud.r-project.org")'
+
+      - name: Run NRT Burned Area
+        run: Rscript R/effis_ba_tiles.R --layer=nrt.ba
+
+      - name: Run MODIS Burned Area
+        run: Rscript R/effis_ba_tiles.R --layer=modis.ba
+
+      - name: Commit and push results
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add out/
+          git commit -m "Update burned area data ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || echo "No changes to commit"
+          git push
