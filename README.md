@@ -23,3 +23,7 @@ install.packages(c("sf", "terra", "dplyr"))
 
 
 Correr el script `effis_ba_tiles.R`.
+
+Puedes echar un ojo a los archivos en mapshaper.org a través del siguiente enlace:
+
+https://mapshaper.org/?q&files=https://raw.githubusercontent.com/LuisSevillano/effis_current_situation/refs/heads/main/out/modis.ba/2025-08-12_to_2025-08-13/spain_fires_modis_ba.geojson,https://raw.githubusercontent.com/LuisSevillano/effis_current_situation/refs/heads/main/out/nrt.ba/2025-08-12_to_2025-08-13/spain_fires_nrt_ba.geojson
